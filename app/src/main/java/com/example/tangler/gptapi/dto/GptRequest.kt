@@ -2,7 +2,7 @@ package com.example.tangler.gptapi.dto
 
 
 data class GptRequest(
-    val model: String = "gpt-4o-mini",  // 또는 gpt-4
+    val model: String = "gpt-5.2-chat-latest",  //
     val messages: List<Message>
 )
 

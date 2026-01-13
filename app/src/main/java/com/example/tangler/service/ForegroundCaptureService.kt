@@ -149,7 +149,7 @@ class ForegroundCaptureService : Service() {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("화면 캡처 중")
             .setContentText("지정된 영역을 분석 중입니다.")
-            .setSmallIcon(R.drawable.tung_sahur)
+            .setSmallIcon(R.drawable.icon)
             .build()
 
         startForeground(NOTIF_ID, notification)
