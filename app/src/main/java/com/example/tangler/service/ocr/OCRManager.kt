@@ -1,9 +1,8 @@
-package com.example.tangler.ocr
+package com.example.tangler.service.ocr
 
 import android.graphics.Bitmap
-import android.util.Log
-import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
 class OCRManager {

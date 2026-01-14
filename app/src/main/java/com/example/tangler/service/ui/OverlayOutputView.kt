@@ -1,4 +1,4 @@
-package com.example.tangler.ui
+package com.example.tangler.service.ui
 
 import android.content.Context
 import android.graphics.Color
@@ -6,7 +6,6 @@ import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
-import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
 
@@ -20,7 +19,7 @@ class OverlayOutputView(context: Context) : FrameLayout(context) {
         }
         gravity = Gravity.CENTER
         setPadding(16, 8, 16, 8)
-        visibility=View.INVISIBLE
+        visibility= INVISIBLE
     }
 
 
@@ -29,14 +28,14 @@ class OverlayOutputView(context: Context) : FrameLayout(context) {
     }
 
     fun updateText(text: String) {
-        textView.visibility= View.VISIBLE
+        textView.visibility= VISIBLE
         textView.text = text
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when(event.action){
             MotionEvent.ACTION_DOWN->{
-                textView.visibility=View.GONE
+                textView.visibility= GONE
 
                 return true
             }

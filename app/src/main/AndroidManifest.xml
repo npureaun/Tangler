@@ -24,7 +24,7 @@
         <!-- MainActivity 설정 -->
 
         <service
-            android:name="com.example.tangler.service.ForegroundCaptureService"
+            android:name="com.example.tangler.service.foreground.ForegroundCaptureService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection"
             android:enabled="true" />

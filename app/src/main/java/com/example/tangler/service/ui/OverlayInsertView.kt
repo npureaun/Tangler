@@ -1,4 +1,4 @@
-package com.example.tangler.ui
+package com.example.tangler.service.ui
 
 import android.content.Context
 import android.graphics.Canvas
@@ -8,7 +8,6 @@ import android.graphics.Rect
 import android.os.Handler
 import android.view.Gravity
 import android.view.MotionEvent
-import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.FrameLayout
@@ -104,7 +103,7 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
                     wm.updateViewLayout(this, params)
                     isHiding=false
 
-                    overlayButton.visibility=View.VISIBLE
+                    overlayButton.visibility= VISIBLE
                     return true
                 }
 
@@ -118,7 +117,7 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
                     val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
                     val params = layoutParams as WindowManager.LayoutParams
                     isHiding=true
-                    overlayButton.visibility= View.INVISIBLE
+                    overlayButton.visibility= INVISIBLE
 
                     params.width = hideHandleSize.toInt()
                     params.height = (hideHandleSize/2).toInt()

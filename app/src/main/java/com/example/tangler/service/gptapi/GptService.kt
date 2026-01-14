@@ -1,4 +1,4 @@
-package com.example.tangler.gptapi
+package com.example.tangler.service.gptapi
 
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
