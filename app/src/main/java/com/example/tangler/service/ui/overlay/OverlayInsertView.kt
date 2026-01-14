@@ -1,4 +1,4 @@
-package com.example.tangler.service.ui
+package com.example.tangler.service.ui.overlay
 
 import android.content.Context
 import android.graphics.Canvas

@@ -1,4 +1,4 @@
-package com.example.tangler.service.ui
+package com.example.tangler.service.ui.overlay
 
 import android.content.Context
 import android.graphics.Color
@@ -8,13 +8,14 @@ import android.view.Gravity
 import android.view.MotionEvent
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.core.graphics.toColorInt
 
 class OverlayOutputView(context: Context) : FrameLayout(context) {
     val textView = TextView(context).apply {
         setTextColor(Color.WHITE)
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
         background = GradientDrawable().apply {
-            setColor(Color.parseColor("#99000000")) // 90% 투명 셀로판 느낌
+            setColor("#99000000".toColorInt()) // 90% 투명 셀로판 느낌
             cornerRadius = 24f
         }
         gravity = Gravity.CENTER
