@@ -1,17 +1,17 @@
-package com.example.tangler.service.gptapi
+package com.example.tangler.service.aiapi.gpt
 
 import com.example.tangler.BuildConfig
-import com.example.tangler.service.gptapi.dto.GptRequest
-import com.example.tangler.service.gptapi.dto.GptResponse
-import com.example.tangler.service.gptapi.dto.Message
+import com.example.tangler.service.aiapi.gpt.dto.GptRequest
+import com.example.tangler.service.aiapi.gpt.dto.GptResponse
+import com.example.tangler.service.aiapi.gpt.dto.Message
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 
-class GptManager {
+class GptManagerImpl: AIManager {
     private val apiKey = BuildConfig.GPT_KEY
-    fun requestGptResponse(userInput: String, onResult: (String?) -> Unit) {
+    override fun requestGptResponse(userInput: String, onResult: (String?) -> Unit) {
         val request = GptRequest(
             messages = listOf(
                 Message(

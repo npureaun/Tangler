@@ -12,10 +12,12 @@ import android.util.Log
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import com.example.tangler.R
+import com.example.tangler.service.aiapi.gpt.AIManager
+import com.example.tangler.service.aiapi.gpt.GptManagerImpl
 import com.example.tangler.service.bitmap.BitmapComponent
 import com.example.tangler.service.bitmap.BitmapComponentImpl
-import com.example.tangler.service.gptapi.GptManager
-import com.example.tangler.service.ocr.OCRManager
+import com.example.tangler.service.ocr.OCRComponent
+import com.example.tangler.service.ocr.OCRComponentImpl
 import com.example.tangler.service.ui.ViewController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,17 +29,15 @@ class ForegroundCaptureService : Service() {
         const val CHANNEL_ID = "capture_channel"
         const val NOTIF_ID = 1
     }
-
-    private val ocrManager=OCRManager()
     private var windowManager: WindowManager? = null
 
-
-    private val captureHandler = Handler(Looper.getMainLooper())
-
-    private lateinit var gptManager:GptManager
+    private lateinit var ocrComponent: OCRComponent
+    private lateinit var aiManager: AIManager
     private lateinit var bitmapComponent: BitmapComponent
     private lateinit var viewController: ViewController
 
+    //mainProcess
+    private val captureHandler = Handler(Looper.getMainLooper())
     private val captureRunnable = Runnable {
         val image = viewController.getImageLatestImage()
         image?.let {
@@ -46,9 +46,9 @@ class ForegroundCaptureService : Service() {
             val updatedRegion = viewController.getOverlayPositionWithOffset()
             val croppedBitmap = bitmapComponent.cropBitmap(fullBitmap, updatedRegion, true)
             var isGptRunning = true
-            ocrManager.recognizeTextFromImage(croppedBitmap, { recognizedText ->
+            ocrComponent.recognizeTextFromImage(croppedBitmap, { recognizedText ->
                 //코루틴으로 . -> .. -> ... 으로 ui업데이트 되도록
-                val loadingJob = CoroutineScope(Dispatchers.Main).launch {
+                CoroutineScope(Dispatchers.Main).launch {
                     val states = listOf(".", "..", "...")
                     var i = 0
                     while (isGptRunning) {
@@ -59,7 +59,7 @@ class ForegroundCaptureService : Service() {
                         i++
                     }
                 }
-                gptManager.requestGptResponse(recognizedText){resultText->
+                aiManager.requestGptResponse(recognizedText){resultText->
                     Thread.sleep(10)
                     isGptRunning=false
                     if(resultText==null) viewController.updateText("ERROR")
@@ -81,7 +81,8 @@ class ForegroundCaptureService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        gptManager=GptManager()
+        ocrComponent= OCRComponentImpl()
+        aiManager=GptManagerImpl()
         bitmapComponent= BitmapComponentImpl(this.contentResolver)
         setUpViewController()
     }
@@ -113,7 +114,9 @@ class ForegroundCaptureService : Service() {
     private fun setUpViewController() {
         if (windowManager == null) {
             windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-            windowManager?.let { viewController= ViewController(it) }
+            windowManager?.let {
+                viewController= ViewController(it)
+            }
         }
         viewController.showTouchableResizableBox(this)
     }
