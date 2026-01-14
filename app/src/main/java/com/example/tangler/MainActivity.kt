@@ -37,7 +37,32 @@ class MainActivity : AppCompatActivity() {
         permission = CapturePermission(this, mediaProjectionLauncher)
         permission.permissionCheck()
 
-        uiController = MainUiController(this)
+        uiController = MainUiController(
+            activity = this,
+            onRestartClick = {
+                restartCaptureService()
+            },
+            onExitClick = {
+                shutdownApp()
+            }
+        )
+        uiController.bind()
+    }
+
+    fun restartCaptureService(){
+        stopService(serviceIntent)
+
+        val intent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        }
+        startActivity(intent)
+
+        finish()
+    }
+
+    fun shutdownApp(){
+        stopService(serviceIntent)
+        finishAndRemoveTask()
     }
 
     override fun onDestroy() {
