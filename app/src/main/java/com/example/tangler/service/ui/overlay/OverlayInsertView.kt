@@ -31,7 +31,6 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
 
     private var isDragging = false
     private var isResizing = false
-    private var isHiding=false
     private var lastX = 0f
     private var lastY = 0f
 
@@ -40,14 +39,12 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
     private var expandedWidth = 0
     private var expandedHeight = 0
 
-    private val resizeThreshold = 100f
     private val minWidth = 200f
     private val minHeight = 80f
     private val maxWidth = resources.displayMetrics.widthPixels.toFloat()
     private val maxHeight = 1000f
 
     private val handleSize = 45f
-    private val hideHandleSize = 100f
 
     private var overlayButton:Button
     private val contentLayer = FrameLayout(context)
@@ -209,7 +206,6 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
                 // 기준점 설정만 한다 (이전 상태 완전히 무시)
                 lastX = event.rawX
                 lastY = event.rawY
-                return true
             }
 
             MotionEvent.ACTION_MOVE -> {
@@ -224,7 +220,6 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
                 // 기준점 갱신
                 lastX = event.rawX
                 lastY = event.rawY
-                return true
             }
 
             MotionEvent.ACTION_UP,
@@ -234,7 +229,6 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
                 isResizing = false
                 lastX = 0f
                 lastY = 0f
-                return true
             }
         }
         return true
@@ -352,7 +346,7 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
         params.width = targetWidth
         params.height = targetHeight
         params.x = iconLocation[0] - iconOffsetX
-        params.y = iconLocation[1] - iconOffsetY
+        params.y = iconLocation[1] - (iconOffsetY+getStatusBarHeight()*2)
 
         wm.updateViewLayout(this, params)
     }
