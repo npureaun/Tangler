@@ -1,7 +1,7 @@
-package com.example.tangler.service.gptapi
+package com.example.tangler.service.aiapi.gpt
 
-import com.example.tangler.service.gptapi.dto.GptRequest
-import com.example.tangler.service.gptapi.dto.GptResponse
+import com.example.tangler.service.aiapi.gpt.dto.GptRequest
+import com.example.tangler.service.aiapi.gpt.dto.GptResponse
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.Header

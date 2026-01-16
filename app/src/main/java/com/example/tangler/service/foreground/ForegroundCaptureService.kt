@@ -1,90 +1,76 @@
 package com.example.tangler.service.foreground
 
-import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
-import android.content.res.Resources
-import android.graphics.PixelFormat
-import android.hardware.display.DisplayManager
-import android.hardware.display.VirtualDisplay
-import android.media.ImageReader
-import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
-import android.os.*
+import android.os.Handler
+import android.os.IBinder
+import android.os.Looper
 import android.util.Log
-import android.view.Gravity
-import android.view.ViewTreeObserver
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import com.example.tangler.R
+import com.example.tangler.service.aiapi.gpt.AIManager
+import com.example.tangler.service.aiapi.gpt.GptManagerImpl
 import com.example.tangler.service.bitmap.BitmapComponent
-import com.example.tangler.service.gptapi.GptManager
-import com.example.tangler.service.ocr.OCRManager
-import com.example.tangler.service.ui.OverlayInsertView
-import com.example.tangler.service.ui.OverlayOutputView
+import com.example.tangler.service.bitmap.BitmapComponentImpl
+import com.example.tangler.service.ocr.OCRComponent
+import com.example.tangler.service.ocr.OCRComponentImpl
+import com.example.tangler.service.ui.ViewController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import com.example.tangler.service.bitmap.BitmapComponentImpl
 
 class ForegroundCaptureService : Service() {
     companion object {
         const val CHANNEL_ID = "capture_channel"
         const val NOTIF_ID = 1
-        const val ACTION_SCREENSHOT = "com.example.ACTION_SCREENSHOT"
     }
-
-    private val ocrManager=OCRManager()
-    private var mediaProjection: MediaProjection? = null
-    private lateinit var imageReader: ImageReader
-    private var virtualDisplay: VirtualDisplay? = null
     private var windowManager: WindowManager? = null
-    private var overlayInsertView: OverlayInsertView? = null
-    private var overlayOutputView: OverlayOutputView?=null
 
-    private val captureHandler = Handler(Looper.getMainLooper())
-
-    private lateinit var gptManager:GptManager
+    private lateinit var ocrComponent: OCRComponent
+    private lateinit var aiManager: AIManager
     private lateinit var bitmapComponent: BitmapComponent
+    private lateinit var viewController: ViewController
 
+    //mainProcess
+    private val captureHandler = Handler(Looper.getMainLooper())
     private val captureRunnable = Runnable {
-        val image = imageReader.acquireLatestImage()
+        val image = viewController.getImageLatestImage()
         image?.let {
             val fullBitmap = bitmapComponent.imageToBitmap(it)
 
-            val updatedRegion = overlayInsertView?.getOverlayPositionWithOffset()
-            if (updatedRegion != null) {
-                val croppedBitmap = bitmapComponent.cropBitmap(fullBitmap, updatedRegion, true)
-                var isGptRunning = true
-                ocrManager.recognizeTextFromImage(croppedBitmap, { recognizedText ->
-                    //코루틴으로 . -> .. -> ... 으로 ui업데이트 되도록
-                    val loadingJob = CoroutineScope(Dispatchers.Main).launch {
-                        val states = listOf(".", "..", "...")
-                        var i = 0
-                        while (isGptRunning) {
-                            if (i % 50 == 0) {
-                                overlayOutputView?.updateText(states[(i / 50) % states.size])
-                            }
-                            delay(10)
-                            i++
+            val updatedRegion = viewController.getOverlayPositionWithOffset()
+            val croppedBitmap = bitmapComponent.cropBitmap(fullBitmap, updatedRegion, false)
+            var isGptRunning = true
+            ocrComponent.recognizeTextFromImage(croppedBitmap, { recognizedText ->
+                //코루틴으로 . -> .. -> ... 으로 ui업데이트 되도록
+                CoroutineScope(Dispatchers.Main).launch {
+                    val states = listOf(".", "..", "...")
+                    var i = 0
+                    while (isGptRunning) {
+                        if (i % 50 == 0) {
+                            viewController.updateText(states[(i / 50) % states.size])
                         }
+                        delay(10)
+                        i++
                     }
-                    gptManager.requestGptResponse(recognizedText){resultText->
-                        Thread.sleep(10)
-                        isGptRunning=false
-                        if(resultText==null) overlayOutputView?.updateText("ERROR")
-                        else overlayOutputView?.updateText(resultText)
-                    }
-                    Log.d("OCR", "인식된 텍스트: $recognizedText")
-                }, { error ->
-                    Log.e("OCR", "OCR 처리 실패: ${error.message}")
-                })
+                }
+                aiManager.requestGptResponse(recognizedText){resultText->
+                    Thread.sleep(10)
+                    isGptRunning=false
+                    if(resultText==null) viewController.updateText("ERROR")
+                    else viewController.updateText(resultText)
+                }
+                Log.d("OCR", "인식된 텍스트: $recognizedText")
+            }, { error ->
+                Log.e("OCR", "OCR 처리 실패: ${error.message}")
+            })
 
-                Log.d("Capture", "Screen captured and cropped.")
-            }
+            Log.d("Capture", "Screen captured and cropped.")
 
             it.close()
         }
@@ -95,32 +81,18 @@ class ForegroundCaptureService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        gptManager=GptManager()
+        ocrComponent= OCRComponentImpl()
+        aiManager=GptManagerImpl()
         bitmapComponent= BitmapComponentImpl(this.contentResolver)
-        showTouchableResizableBox()
+        setUpViewController()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         createNotification()
 
-        val resultCode = intent?.getIntExtra("resultCode", Activity.RESULT_CANCELED) ?: return START_NOT_STICKY
-        val data = intent.getParcelableExtra<Intent>("data") ?: return START_NOT_STICKY
-
         val mediaProjectionManager = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data)
-
-        // 콜백 등록
-        mediaProjection?.registerCallback(object : MediaProjection.Callback() {
-            override fun onStop() {
-                super.onStop()
-                Log.d("MediaProjection", "MediaProjection stopped.")
-                virtualDisplay?.release()
-                imageReader.close()
-                stopSelf()
-            }
-        }, Handler(Looper.getMainLooper()))
-
-        setupVirtualDisplay()
+        intent?.let { viewController.setupMediaProjection(it, mediaProjectionManager) }
+        viewController.setupVirtualDisplay(captureHandler, captureRunnable)
 
         return START_NOT_STICKY
     }
@@ -139,81 +111,19 @@ class ForegroundCaptureService : Service() {
         startForeground(NOTIF_ID, notification)
     }
 
-    private fun setupVirtualDisplay() {
-        val density = Resources.getSystem().displayMetrics.densityDpi
-        val screenWidth = Resources.getSystem().displayMetrics.widthPixels
-        val screenHeight = Resources.getSystem().displayMetrics.heightPixels
-
-        overlayInsertView?.viewTreeObserver?.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                overlayInsertView?.viewTreeObserver?.removeOnGlobalLayoutListener(this)
-
-                imageReader = ImageReader.newInstance(screenWidth, screenHeight, PixelFormat.RGBA_8888, 2)
-
-                virtualDisplay = mediaProjection?.createVirtualDisplay(
-                    "ScreenCapture",
-                    screenWidth, screenHeight, density,
-                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                    imageReader.surface, null, null
-                )
-                //captureHandler.postDelayed(captureRunnable,3000)
-                overlayInsertView?.setRunnable(captureHandler,captureRunnable)
-                //Handler(Looper.getMainLooper()).postDelayed(captureRunnable, 3000)
-            }
-        })
-    }
-
-    private fun showTouchableResizableBox() {
+    private fun setUpViewController() {
         if (windowManager == null) {
             windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+            windowManager?.let {
+                viewController= ViewController(it)
+            }
         }
-
-        overlayInsertView = OverlayInsertView(this)
-        overlayOutputView=OverlayOutputView(this)
-
-        // ResizableOverlayView를 위한 WindowManager.LayoutParams 설정
-        val params = WindowManager.LayoutParams(
-            1000,  // width
-            400,   // height
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT,
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = 200
-            y = 200
-            alpha = 0.9f
-        }
-
-        // 오버레이 뷰 추가
-        windowManager?.addView(overlayInsertView, params)
-
-        // TextView를 위한 별도 WindowManager.LayoutParams 설정
-        val textParams = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT, // 화면 너비 전체
-            WindowManager.LayoutParams.WRAP_CONTENT, // 텍스트에 따라 높이 자동
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x=0
-            y=0
-        }
-        windowManager?.addView(overlayOutputView, textParams)
+        viewController.showTouchableResizableBox(this)
     }
 
     private fun stopService(){
-        removeViews()
+        viewController.removeViews()
         stopSelf()
-    }
-
-    private fun removeViews() {
-        overlayInsertView?.let {
-            windowManager?.removeView(it)
-        }
-        overlayOutputView?.let {
-            windowManager?.removeView(it)
-        }
     }
 
     override fun onDestroy() {

@@ -1,4 +1,4 @@
-package com.example.tangler.service.gptapi.dto
+package com.example.tangler.service.aiapi.gpt.dto
 
 
 data class GptRequest(
