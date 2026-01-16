@@ -345,8 +345,9 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
 
         val viewLocation = IntArray(2)
         val iconLocation = IntArray(2)
-        getLocationInWindow(viewLocation)
-        iconToggleView.getLocationInWindow(iconLocation)
+
+        getLocationOnScreen(viewLocation)
+        iconToggleView.getLocationOnScreen(iconLocation)
 
         val iconOffsetX = iconLocation[0] - viewLocation[0]
         val iconOffsetY = iconLocation[1] - viewLocation[1]
