@@ -55,9 +55,6 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
     private var iconWasDragged = false
     private val iconTouchSlop = 20f
 
-
-
-
     private val iconToggleView = ImageView(context).apply {
         setImageResource(R.drawable.layout_icon)
         layoutParams = LayoutParams(
