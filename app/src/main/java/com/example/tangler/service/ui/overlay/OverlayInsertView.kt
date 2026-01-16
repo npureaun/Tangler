@@ -345,6 +345,7 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
 
         val viewLocation = IntArray(2)
         val iconLocation = IntArray(2)
+
         getLocationOnScreen(viewLocation)
         iconToggleView.getLocationOnScreen(iconLocation)
 
