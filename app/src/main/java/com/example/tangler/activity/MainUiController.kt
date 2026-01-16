@@ -1,8 +1,8 @@
 package com.example.tangler.activity
 
-import com.example.tangler.R
 import android.app.Activity
 import android.widget.Button
+import com.example.tangler.R
 
 class MainUiController(
     private val activity: Activity,

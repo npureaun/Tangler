@@ -44,7 +44,7 @@ class ForegroundCaptureService : Service() {
             val fullBitmap = bitmapComponent.imageToBitmap(it)
 
             val updatedRegion = viewController.getOverlayPositionWithOffset()
-            val croppedBitmap = bitmapComponent.cropBitmap(fullBitmap, updatedRegion, true)
+            val croppedBitmap = bitmapComponent.cropBitmap(fullBitmap, updatedRegion, false)
             var isGptRunning = true
             ocrComponent.recognizeTextFromImage(croppedBitmap, { recognizedText ->
                 //코루틴으로 . -> .. -> ... 으로 ui업데이트 되도록

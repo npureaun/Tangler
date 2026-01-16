@@ -9,8 +9,11 @@ import android.view.MotionEvent
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.core.graphics.toColorInt
+import io.noties.markwon.Markwon
 
-class OverlayOutputView(context: Context) : FrameLayout(context) {
+class OverlayOutputView(private val context: Context) : FrameLayout(context) {
+    private var markdown: Markwon?=null
+
     val textView = TextView(context).apply {
         setTextColor(Color.WHITE)
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
@@ -25,22 +28,28 @@ class OverlayOutputView(context: Context) : FrameLayout(context) {
 
 
     init {
+        textView.setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                textView.visibility = GONE
+                textView.text = ""
+                true
+            } else {
+                false
+            }
+        }
         addView(textView) // `TextView`는 `OverlayTextView` 내에서 관리되고, 추가됩니다.
     }
 
     fun updateText(text: String) {
-        textView.visibility= VISIBLE
-        textView.text = text
-    }
+        if (markdown == null) {
+            markdown = Markwon.create(textView.context)
 
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        when(event.action){
-            MotionEvent.ACTION_DOWN->{
-                textView.visibility= GONE
-
-                return true
-            }
+            textView.movementMethod = null
+            textView.isClickable = false
+            textView.isFocusable = false
+            textView.isLongClickable = false
         }
-        return super.onTouchEvent(event)
+        textView.visibility= VISIBLE
+        markdown!!.setMarkdown(textView, text)
     }
 }

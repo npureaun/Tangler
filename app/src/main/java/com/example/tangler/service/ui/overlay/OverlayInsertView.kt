@@ -11,6 +11,8 @@ import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.ImageView
+import com.example.tangler.R
 
 class OverlayInsertView(context: Context,) : FrameLayout(context) {
 
@@ -46,6 +48,27 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
     private val hideHandleSize = 100f
 
     private var overlayButton:Button
+    private val contentLayer = FrameLayout(context)
+    private var isCollapsed = false
+
+    private var iconDownX = 0f
+    private var iconDownY = 0f
+    private val iconTouchSlop = 20f
+
+
+
+
+    private val iconToggleView = ImageView(context).apply {
+        setImageResource(R.drawable.layout_icon)
+        layoutParams = LayoutParams(
+            dpToPx(40),
+            dpToPx(40)
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+        }
+        alpha = 0.9f
+    }
+
 
     init {
         // FrameLayout은 기본적으로 onDraw를 호출하지 않으므로 강제로 허용
@@ -68,8 +91,75 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
             }
         }
 
-        addView(overlayButton)
+        iconToggleView.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    iconDownX = event.rawX
+                    iconDownY = event.rawY
+                    true
+                }
+
+                MotionEvent.ACTION_UP -> {
+                    val dx = kotlin.math.abs(event.rawX - iconDownX)
+                    val dy = kotlin.math.abs(event.rawY - iconDownY)
+
+                    if (dx < iconTouchSlop && dy < iconTouchSlop) {
+                        // ⭐ 진짜 클릭일 때만 토글
+                        post {
+                            if (isCollapsed) expand() else collapse()
+                        }
+                    }
+                    true
+                }
+
+                else -> true
+            }
+        }
+
+
+
+
+        contentLayer.addView(overlayButton)
+        addView(iconToggleView)
+        addView(contentLayer)
     }
+    private fun collapse() {
+        isCollapsed = true
+        isDragging = false
+        isResizing = false
+        lastX = 0f
+        lastY = 0f
+
+        contentLayer.visibility = GONE
+
+        val params = layoutParams as WindowManager.LayoutParams
+        params.width = dpToPx(40)
+        params.height = dpToPx(40)
+
+        iconToggleView.x=contentLayer.x
+        iconToggleView.y=contentLayer.y
+
+        (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
+            .updateViewLayout(this, params)
+    }
+
+
+    private fun expand() {
+        isCollapsed = false
+
+        contentLayer.visibility = VISIBLE
+
+        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val params = layoutParams as WindowManager.LayoutParams
+
+        params.width = 1000
+        params.height = 400
+
+        wm.updateViewLayout(this, params)
+    }
+
+
+
     fun dpToPx(dp: Int): Int =
         (dp * context.resources.displayMetrics.density).toInt()
 
@@ -80,6 +170,8 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
     }
 
     override fun onDraw(canvas: Canvas) {
+        if (isCollapsed) return
+
         super.onDraw(canvas)
 
         // 배경 사각형
@@ -88,42 +180,125 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
         // 리사이즈 핸들 (오른쪽 아래)
         canvas.drawRect(width - handleSize, height - handleSize, width.toFloat(), height.toFloat(), paint)
 
-        canvas.drawRect(0f, 0f, hideHandleSize, hideHandleSize/2, paint)
+        //canvas.drawRect(0f, 0f, hideHandleSize, hideHandleSize/2, paint)
     }
 
+    private fun handleMove(event: MotionEvent): Boolean {
+        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val params = layoutParams as WindowManager.LayoutParams
+
+        if (isResizing) {
+            val dx = event.rawX - lastX
+            val dy = event.rawY - lastY
+
+            val newWidth = (originalWidth + dx).coerceIn(minWidth, maxWidth)
+            val newHeight = (originalHeight + dy).coerceIn(minHeight, maxHeight)
+
+            params.width = newWidth.toInt()
+            params.height = newHeight.toInt()
+            wm.updateViewLayout(this, params)
+
+        } else if (isDragging) {
+            val dx = (event.rawX - lastX).toInt()
+            val dy = (event.rawY - lastY).toInt()
+
+            params.x += dx
+            params.y += dy
+            wm.updateViewLayout(this, params)
+
+            lastX = event.rawX
+            lastY = event.rawY
+        }
+        return true
+    }
+
+    private fun isInIconArea(ev: MotionEvent): Boolean {
+        val iconLocation = IntArray(2)
+        iconToggleView.getLocationOnScreen(iconLocation)
+
+        val x = ev.rawX
+        val y = ev.rawY
+
+        return x >= iconLocation[0] &&
+                x <= iconLocation[0] + iconToggleView.width &&
+                y >= iconLocation[1] &&
+                y <= iconLocation[1] + iconToggleView.height
+    }
+
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        // ⭐ 아이콘 영역 터치는 부모가 가로챈다
+        if (isInIconArea(ev)) {
+            return true
+        }
+        return super.onInterceptTouchEvent(ev)
+    }
+
+    private fun handleDragOnly(event: MotionEvent): Boolean {
+        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val params = layoutParams as WindowManager.LayoutParams
+
+        when (event.action) {
+
+            MotionEvent.ACTION_DOWN -> {
+                // 기준점 설정만 한다 (이전 상태 완전히 무시)
+                lastX = event.rawX
+                lastY = event.rawY
+                return true
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                val dx = (event.rawX - lastX).toInt()
+                val dy = (event.rawY - lastY).toInt()
+
+                // ⭐ 이동만 허용 (리사이즈/상태 변화 없음)
+                params.x += dx
+                params.y += dy
+                wm.updateViewLayout(this, params)
+
+                // 기준점 갱신
+                lastX = event.rawX
+                lastY = event.rawY
+                return true
+            }
+
+            MotionEvent.ACTION_UP,
+            MotionEvent.ACTION_CANCEL -> {
+                // ⭐ 반드시 상태 정리
+                isDragging = false
+                isResizing = false
+                lastX = 0f
+                lastY = 0f
+                return true
+            }
+        }
+        return true
+    }
+
+
+
+
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        // 아이콘 토글 처리
+        if (isInIconArea(event) && event.action == MotionEvent.ACTION_UP) {
+            if (isCollapsed) expand() else collapse()
+            return true
+        }
+
+        // 접힌 상태: 드래그만 허용
+        if (isCollapsed) {
+            return handleDragOnly(event)
+        }
+
+        // 펼쳐진 상태: 기존 드래그/리사이즈
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                if(isHiding) {
-                    val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-                    val params = layoutParams as WindowManager.LayoutParams
-
-                    params.width = 1000
-                    params.height = 400
-                    wm.updateViewLayout(this, params)
-                    isHiding=false
-
-                    overlayButton.visibility= VISIBLE
-                    return true
-                }
-
                 if (isInResizeArea(event)) {
                     isResizing = true
                     lastX = event.rawX
                     lastY = event.rawY
                     originalWidth = width
                     originalHeight = height
-                }else if(isInHideArea(event)){
-                    val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-                    val params = layoutParams as WindowManager.LayoutParams
-                    isHiding=true
-                    overlayButton.visibility= INVISIBLE
-
-                    params.width = hideHandleSize.toInt()
-                    params.height = (hideHandleSize/2).toInt()
-                    wm.updateViewLayout(this, params)
-                }
-                else {
+                } else {
                     isDragging = true
                     lastX = event.rawX
                     lastY = event.rawY
@@ -132,57 +307,16 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
             }
 
             MotionEvent.ACTION_MOVE -> {
-                val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-                val params = layoutParams as WindowManager.LayoutParams
-
-                if (isResizing) {
-                    val dx = event.rawX - lastX
-                    val dy = event.rawY - lastY
-
-                    val newWidth = (originalWidth + dx).coerceIn(minWidth, maxWidth)
-                    val newHeight = (originalHeight + dy).coerceIn(minHeight, maxHeight)
-
-                    params.width = newWidth.toInt()
-                    params.height = newHeight.toInt()
-                    wm.updateViewLayout(this, params)
-
-                } else if (isDragging) {
-                    val dx = (event.rawX - lastX).toInt()
-                    val dy = (event.rawY - lastY).toInt()
-
-                    params.x += dx
-                    params.y += dy
-                    wm.updateViewLayout(this, params)
-
-                    lastX = event.rawX
-                    lastY = event.rawY
-                }
-                //캡쳐 러너블 정지
-               // captureHandler?.removeCallbacks(captureRunnable!!)
-                return true
+                return handleMove(event)
             }
 
             MotionEvent.ACTION_UP -> {
-                //캡쳐 러너블 재시작
                 isDragging = false
                 isResizing = false
-                //captureHandler?.postDelayed(captureRunnable!!,3000)
                 return true
             }
         }
-        return super.onTouchEvent(event)
-    }
-
-    private fun isInHideArea(event: MotionEvent):Boolean{
-        val location = IntArray(2)
-        getLocationOnScreen(location)
-        val viewLeft = location[0]
-        val viewTop = location[1]
-
-        val localX = event.rawX - viewLeft
-        val localY = event.rawY - viewTop
-
-        return localX <= hideHandleSize && localY <= 45
+        return false
     }
 
     private fun isInResizeArea(event: MotionEvent): Boolean {
