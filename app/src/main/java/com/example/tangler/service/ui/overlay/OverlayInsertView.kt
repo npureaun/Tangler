@@ -97,10 +97,7 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
     }
     private fun collapse() {
         isCollapsed = true
-        isDragging = false
-        isResizing = false
-        lastX = 0f
-        lastY = 0f
+        resetTouchState()
 
         contentLayer.visibility = GONE
 
@@ -119,6 +116,7 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
         val targetWidth = if (expandedWidth > 0) expandedWidth else 1000
         val targetHeight = if (expandedHeight > 0) expandedHeight else 400
         updateLayoutKeepingIconPosition(targetWidth, targetHeight)
+        resetTouchState()
     }
 
 
@@ -351,7 +349,35 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
         params.x = iconLocation[0] - iconOffsetX
         params.y = iconLocation[1] - (iconOffsetY+getStatusBarHeight()*2)
 
+        val wasAdjusted = adjustLayoutToScreenBounds(params)
+
         wm.updateViewLayout(this, params)
+        if (wasAdjusted) {
+            resetTouchState()
+        }
+    }
+
+    private fun adjustLayoutToScreenBounds(params: WindowManager.LayoutParams): Boolean {
+        val screenWidth = resources.displayMetrics.widthPixels
+        val screenHeight = resources.displayMetrics.heightPixels
+        val maxX = (screenWidth - params.width).coerceAtLeast(0)
+        val maxY = (screenHeight - params.height).coerceAtLeast(0)
+
+        val adjustedX = params.x.coerceIn(0, maxX)
+        val adjustedY = params.y.coerceIn(0, maxY)
+        val wasAdjusted = adjustedX != params.x || adjustedY != params.y
+
+        params.x = adjustedX
+        params.y = adjustedY
+        return wasAdjusted
+    }
+
+    private fun resetTouchState() {
+        isDragging = false
+        isResizing = false
+        lastX = 0f
+        lastY = 0f
+        iconWasDragged = false
     }
 
     fun getStatusBarHeight(): Int {
