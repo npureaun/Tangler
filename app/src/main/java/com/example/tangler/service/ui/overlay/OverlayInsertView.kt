@@ -37,6 +37,8 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
 
     private var originalWidth = 0
     private var originalHeight = 0
+    private var expandedWidth = 0
+    private var expandedHeight = 0
 
     private val resizeThreshold = 100f
     private val minWidth = 200f
@@ -106,11 +108,9 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
         contentLayer.visibility = GONE
 
         val params = layoutParams as WindowManager.LayoutParams
-        params.width = dpToPx(40)
-        params.height = dpToPx(40)
-
-        (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
-            .updateViewLayout(this, params)
+        expandedWidth = params.width
+        expandedHeight = params.height
+        updateLayoutKeepingIconPosition(dpToPx(40), dpToPx(40))
     }
 
 
@@ -119,13 +119,9 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
 
         contentLayer.visibility = VISIBLE
 
-        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val params = layoutParams as WindowManager.LayoutParams
-
-        params.width = 1000
-        params.height = 400
-
-        wm.updateViewLayout(this, params)
+        val targetWidth = if (expandedWidth > 0) expandedWidth else 1000
+        val targetHeight = if (expandedHeight > 0) expandedHeight else 400
+        updateLayoutKeepingIconPosition(targetWidth, targetHeight)
     }
 
 
@@ -341,6 +337,26 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
         val localY = event.rawY - viewTop
 
         return localX >= (width - handleSize) && localY >= (height - handleSize)
+    }
+
+    private fun updateLayoutKeepingIconPosition(targetWidth: Int, targetHeight: Int) {
+        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val params = layoutParams as WindowManager.LayoutParams
+
+        val viewLocation = IntArray(2)
+        val iconLocation = IntArray(2)
+        getLocationInWindow(viewLocation)
+        iconToggleView.getLocationInWindow(iconLocation)
+
+        val iconOffsetX = iconLocation[0] - viewLocation[0]
+        val iconOffsetY = iconLocation[1] - viewLocation[1]
+
+        params.width = targetWidth
+        params.height = targetHeight
+        params.x = iconLocation[0] - iconOffsetX
+        params.y = iconLocation[1] - iconOffsetY
+
+        wm.updateViewLayout(this, params)
     }
 
     fun getStatusBarHeight(): Int {
