@@ -14,7 +14,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import com.example.tangler.R
 
-class OverlayInsertView(context: Context,) : FrameLayout(context) {
+class OverlayInsertView(context: Context) : FrameLayout(context) {
 
     //오버레이뷰의 오른쪽 위에 위치하는 자식 버튼 생성
     //
@@ -146,6 +146,11 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
         //canvas.drawRect(0f, 0f, hideHandleSize, hideHandleSize/2, paint)
     }
 
+    private fun getDxDy(event: MotionEvent): Pair<Int,Int>{
+        return Pair((event.rawX - lastX).toInt(),
+            (event.rawY - lastY).toInt())
+    }
+
     private fun handleMove(event: MotionEvent): Boolean {
         val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val params = layoutParams as WindowManager.LayoutParams
@@ -162,8 +167,7 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
             wm.updateViewLayout(this, params)
 
         } else if (isDragging) {
-            val dx = (event.rawX - lastX).toInt()
-            val dy = (event.rawY - lastY).toInt()
+            val (dx,dy)=getDxDy(event)
 
             params.x += dx
             params.y += dy
@@ -209,8 +213,7 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
             }
 
             MotionEvent.ACTION_MOVE -> {
-                val dx = (event.rawX - lastX).toInt()
-                val dy = (event.rawY - lastY).toInt()
+                val (dx,dy)=getDxDy(event)
 
                 // ⭐ 이동만 허용 (리사이즈/상태 변화 없음)
                 params.x += dx
@@ -261,8 +264,8 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
                     if (isCollapsed && iconWasDragged) {
                         val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
                         val params = layoutParams as WindowManager.LayoutParams
-                        val moveDx = (event.rawX - lastX).toInt()
-                        val moveDy = (event.rawY - lastY).toInt()
+                        
+                        val (moveDx,moveDy)=getDxDy(event)
                         params.x += moveDx
                         params.y += moveDy
                         wm.updateViewLayout(this, params)
