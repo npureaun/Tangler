@@ -53,6 +53,7 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
 
     private var iconDownX = 0f
     private var iconDownY = 0f
+    private var iconWasDragged = false
     private val iconTouchSlop = 20f
 
 
@@ -91,34 +92,6 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
             }
         }
 
-        iconToggleView.setOnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    iconDownX = event.rawX
-                    iconDownY = event.rawY
-                    true
-                }
-
-                MotionEvent.ACTION_UP -> {
-                    val dx = kotlin.math.abs(event.rawX - iconDownX)
-                    val dy = kotlin.math.abs(event.rawY - iconDownY)
-
-                    if (dx < iconTouchSlop && dy < iconTouchSlop) {
-                        // ⭐ 진짜 클릭일 때만 토글
-                        post {
-                            if (isCollapsed) expand() else collapse()
-                        }
-                    }
-                    true
-                }
-
-                else -> true
-            }
-        }
-
-
-
-
         contentLayer.addView(overlayButton)
         addView(iconToggleView)
         addView(contentLayer)
@@ -135,9 +108,6 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
         val params = layoutParams as WindowManager.LayoutParams
         params.width = dpToPx(40)
         params.height = dpToPx(40)
-
-        iconToggleView.x=contentLayer.x
-        iconToggleView.y=contentLayer.y
 
         (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
             .updateViewLayout(this, params)
@@ -278,10 +248,52 @@ class OverlayInsertView(context: Context,) : FrameLayout(context) {
 
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        // 아이콘 토글 처리
-        if (isInIconArea(event) && event.action == MotionEvent.ACTION_UP) {
-            if (isCollapsed) expand() else collapse()
-            return true
+        // 아이콘 토글 처리 (드래그 시 토글 방지)
+        if (isInIconArea(event)) {
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    iconDownX = event.rawX
+                    iconDownY = event.rawY
+                    iconWasDragged = false
+                    if (isCollapsed) {
+                        lastX = event.rawX
+                        lastY = event.rawY
+                    }
+                    return true
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = kotlin.math.abs(event.rawX - iconDownX)
+                    val dy = kotlin.math.abs(event.rawY - iconDownY)
+                    if (dx > iconTouchSlop || dy > iconTouchSlop) {
+                        iconWasDragged = true
+                    }
+                    if (isCollapsed && iconWasDragged) {
+                        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                        val params = layoutParams as WindowManager.LayoutParams
+                        val moveDx = (event.rawX - lastX).toInt()
+                        val moveDy = (event.rawY - lastY).toInt()
+                        params.x += moveDx
+                        params.y += moveDy
+                        wm.updateViewLayout(this, params)
+                        lastX = event.rawX
+                        lastY = event.rawY
+                    }
+                    return true
+                }
+
+                MotionEvent.ACTION_UP,
+                MotionEvent.ACTION_CANCEL -> {
+                    if (!iconWasDragged) {
+                        if (isCollapsed) expand() else collapse()
+                    }
+                    isDragging = false
+                    isResizing = false
+                    lastX = 0f
+                    lastY = 0f
+                    return true
+                }
+            }
         }
 
         // 접힌 상태: 드래그만 허용
