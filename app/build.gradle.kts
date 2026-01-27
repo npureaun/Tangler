@@ -58,9 +58,15 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+
+    //mlkit
     implementation ("com.google.mlkit:text-recognition:16.0.1")
+    implementation("com.google.mlkit:text-recognition-japanese:16.0.1")
+
     implementation ("com.squareup.retrofit2:retrofit:3.0.0")
     implementation ("com.squareup.retrofit2:converter-gson:3.0.0")
     implementation ("com.squareup.okhttp3:logging-interceptor:5.3.2")
+
+    //markdown
     implementation ("io.noties.markwon:core:4.6.2")
 }
