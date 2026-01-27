@@ -48,6 +48,7 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
 
     private var overlayButton:Button
     private val contentLayer = FrameLayout(context)
+    private val topBarView = FrameLayout(context)
     private var isCollapsed = false
 
     private var iconDownX = 0f
@@ -88,7 +89,16 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
             }
         }
 
+        topBarView.layoutParams = LayoutParams(
+            LayoutParams.MATCH_PARENT,
+            dpToPx(56)
+        ).apply {
+            gravity = Gravity.TOP
+        }
+        topBarView.setBackgroundColor(Color.BLACK)
+
         contentLayer.addView(overlayButton)
+        addView(topBarView)
         addView(iconToggleView)
         addView(contentLayer)
     }
@@ -97,6 +107,7 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
         resetTouchState()
 
         contentLayer.visibility = GONE
+        topBarView.visibility = GONE
 
         val params = layoutParams as WindowManager.LayoutParams
         expandedWidth = params.width
@@ -109,6 +120,7 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
         isCollapsed = false
 
         contentLayer.visibility = VISIBLE
+        topBarView.visibility = VISIBLE
 
         val targetWidth = if (expandedWidth > 0) expandedWidth else 1000
         val targetHeight = if (expandedHeight > 0) expandedHeight else 400
