@@ -55,6 +55,8 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
     private var iconWasDragged = false
     private val iconTouchSlop = 20f
 
+    private val iconOverlapOffset = dpToPx(12)
+
     private val iconToggleView = ImageView(context).apply {
         setImageResource(R.drawable.layout_icon)
         layoutParams = LayoutParams(
@@ -62,6 +64,8 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
             dpToPx(40)
         ).apply {
             gravity = Gravity.TOP or Gravity.START
+            leftMargin = -iconOverlapOffset
+            topMargin = -iconOverlapOffset
         }
         alpha = 0.9f
     }
@@ -70,6 +74,8 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
     init {
         // FrameLayout은 기본적으로 onDraw를 호출하지 않으므로 강제로 허용
         setWillNotDraw(false)
+        clipChildren = false
+        clipToPadding = false
         // 레이아웃 파라미터 세팅
         overlayButton = Button(context).apply {
             alpha=0.5f
