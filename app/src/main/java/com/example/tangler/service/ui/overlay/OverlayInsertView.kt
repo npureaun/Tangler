@@ -48,7 +48,7 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
 
     private var overlayButton:Button
     private val contentLayer = FrameLayout(context)
-    private val topBarView = FrameLayout(context)
+    private val controlBar = FrameLayout(context)
     private var isCollapsed = false
 
     private var iconDownX = 0f
@@ -59,12 +59,14 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
     private val iconToggleView = ImageView(context).apply {
         setImageResource(R.drawable.layout_icon)
         layoutParams = LayoutParams(
-            dpToPx(40),
-            dpToPx(40)
+            dpToPx(39),
+            dpToPx(39)
         ).apply {
             gravity = Gravity.TOP or Gravity.START
+            marginEnd = dpToPx(8)
+            topMargin = dpToPx(-1)
         }
-        alpha = 0.9f
+        alpha = 1f
     }
 
 
@@ -73,7 +75,7 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
         setWillNotDraw(false)
         // 레이아웃 파라미터 세팅
         overlayButton = Button(context).apply {
-            alpha=0.5f
+            alpha=1f
             setOnClickListener {
                 captureHandler?.postDelayed(captureRunnable!!,1)
             }
@@ -85,20 +87,21 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
             ).apply {
                 gravity = Gravity.TOP or Gravity.END
                 marginEnd = dpToPx(8)
-                topMargin = dpToPx(8)
+                topMargin = dpToPx(0)
             }
         }
 
-        topBarView.layoutParams = LayoutParams(
+        controlBar.layoutParams = LayoutParams(
             LayoutParams.MATCH_PARENT,
-            dpToPx(56)
+            dpToPx(35)
         ).apply {
+            alpha=1f
             gravity = Gravity.TOP
         }
-        topBarView.setBackgroundColor(Color.BLACK)
 
+        controlBar.setBackgroundColor(Color.BLACK)
         contentLayer.addView(overlayButton)
-        addView(topBarView)
+        addView(controlBar)
         addView(iconToggleView)
         addView(contentLayer)
     }
@@ -107,7 +110,7 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
         resetTouchState()
 
         contentLayer.visibility = GONE
-        topBarView.visibility = GONE
+        controlBar.visibility = GONE
 
         val params = layoutParams as WindowManager.LayoutParams
         expandedWidth = params.width
@@ -120,7 +123,7 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
         isCollapsed = false
 
         contentLayer.visibility = VISIBLE
-        topBarView.visibility = VISIBLE
+        controlBar.visibility = VISIBLE
 
         val targetWidth = if (expandedWidth > 0) expandedWidth else 1000
         val targetHeight = if (expandedHeight > 0) expandedHeight else 400
@@ -144,8 +147,18 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
 
         super.onDraw(canvas)
 
-        // 배경 사각형
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
+        val topBarHeight = controlBar.height.toFloat()
+
+        // controlBar 아래 영역만 반투명 배경
+        canvas.drawRect(
+            0f,
+            topBarHeight,
+            width.toFloat(),
+            height.toFloat(),
+            paint
+        )
+//        // 배경 사각형
+//        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
 
         // 리사이즈 핸들 (오른쪽 아래)
         canvas.drawRect(width - handleSize, height - handleSize, width.toFloat(), height.toFloat(), paint)
@@ -398,6 +411,8 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
         val location = IntArray(2)
         getLocationOnScreen(location)
         val yOffset = getStatusBarHeight()
-        return Rect(location[0], location[1] - (yOffset), location[0] + width, location[1] + height - (yOffset))
+        val x=location[0]
+        val y = location[1]//+topBarView.height
+        return Rect(x, y - (yOffset), x + width, y + height - (yOffset))
     }
 }

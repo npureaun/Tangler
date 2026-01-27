@@ -46,7 +46,7 @@ class ForegroundCaptureService : Service() {
             val fullBitmap = bitmapComponent.imageToBitmap(it)
 
             val updatedRegion = viewController.getOverlayPositionWithOffset()
-            val croppedBitmap = bitmapComponent.cropBitmap(fullBitmap, updatedRegion, false)
+            val croppedBitmap = bitmapComponent.cropBitmap(fullBitmap, updatedRegion, true)
             var isGptRunning = true
 
             //OCR Process
