@@ -24,7 +24,7 @@ class MainUiController(
         val exitButton =
             activity.findViewById<Button>(R.id.btnExit)
 
-        val ocrTypes = OCRType.values()
+        val ocrTypes = OCRType.entries.toTypedArray()
         val adapter = ArrayAdapter(
             activity,
             android.R.layout.simple_spinner_item,

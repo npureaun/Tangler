@@ -1,4 +1,4 @@
-package com.example.tangler.service.ocr
+package com.example.tangler.service.ocr.component
 
 import android.graphics.Bitmap
 

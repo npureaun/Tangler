@@ -2,19 +2,10 @@ package com.example.tangler.service.ocr
 
 import android.graphics.Bitmap
 
-class OCRManager {
-
-
-    private val ocrMap: Map<OCRType, OCRComponent> = mapOf(
-        OCRType.ENG to OCRENGComponentImpl(),
-        OCRType.JPN to OCRJPNComponentImpl()
+interface OCRManager {
+    fun ocrProcess(
+        bitmap: Bitmap,
+        onSuccess: (String) -> Unit,
+        onFailure: (Exception) -> Unit
     )
-
-    fun ocrProcess(bitmap: Bitmap): String {
-        val key = UiStateProvider.getCurrentOCRType()
-        val component = ocrMap[key]
-            ?: error("Unsupported OCR type: $key")
-
-        return component.process(bitmap)
-    }
 }
