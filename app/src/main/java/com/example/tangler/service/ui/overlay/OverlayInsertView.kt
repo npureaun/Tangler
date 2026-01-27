@@ -55,11 +55,13 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
     private var iconWasDragged = false
     private val iconTouchSlop = 20f
 
+    private val iconSize = dpToPx(40)
+    private val iconOutsideRatio = 0.9f
     private val iconToggleView = ImageView(context).apply {
         setImageResource(R.drawable.layout_icon)
         layoutParams = LayoutParams(
-            dpToPx(40),
-            dpToPx(40)
+            iconSize,
+            iconSize
         ).apply {
             gravity = Gravity.TOP or Gravity.START
         }
@@ -91,10 +93,13 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
         contentLayer.addView(overlayButton)
         addView(iconToggleView)
         addView(contentLayer)
+        updateIconOffset(isCollapsed)
     }
     private fun collapse() {
         isCollapsed = true
         resetTouchState()
+
+        updateIconOffset(isCollapsed)
 
         contentLayer.visibility = GONE
 
@@ -107,6 +112,8 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
 
     private fun expand() {
         isCollapsed = false
+
+        updateIconOffset(isCollapsed)
 
         contentLayer.visibility = VISIBLE
 
@@ -352,6 +359,14 @@ class OverlayInsertView(context: Context) : FrameLayout(context) {
         if (wasAdjusted) {
             resetTouchState()
         }
+    }
+
+    private fun updateIconOffset(collapsed: Boolean) {
+        val layoutParams = iconToggleView.layoutParams as LayoutParams
+        val outsideOffset = if (collapsed) 0 else (iconSize * iconOutsideRatio).toInt()
+        layoutParams.marginStart = -outsideOffset
+        layoutParams.topMargin = -outsideOffset
+        iconToggleView.layoutParams = layoutParams
     }
 
     private fun adjustLayoutToScreenBounds(params: WindowManager.LayoutParams): Boolean {
