@@ -16,8 +16,10 @@ import com.example.tangler.service.aiapi.gpt.AIManager
 import com.example.tangler.service.aiapi.gpt.GptManagerImpl
 import com.example.tangler.service.bitmap.BitmapComponent
 import com.example.tangler.service.bitmap.BitmapComponentImpl
-import com.example.tangler.service.ocr.OCRComponent
-import com.example.tangler.service.ocr.OCRComponentImpl
+import com.example.tangler.service.ocr.OCRManager
+import com.example.tangler.service.ocr.OCRManagerImpl
+import com.example.tangler.service.ocr.component.OCRComponent
+import com.example.tangler.service.ocr.component.OCRENGComponentImpl
 import com.example.tangler.service.ui.ViewController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +33,7 @@ class ForegroundCaptureService : Service() {
     }
     private var windowManager: WindowManager? = null
 
-    private lateinit var ocrComponent: OCRComponent
+    private lateinit var ocrManager: OCRManager
     private lateinit var aiManager: AIManager
     private lateinit var bitmapComponent: BitmapComponent
     private lateinit var viewController: ViewController
@@ -46,7 +48,9 @@ class ForegroundCaptureService : Service() {
             val updatedRegion = viewController.getOverlayPositionWithOffset()
             val croppedBitmap = bitmapComponent.cropBitmap(fullBitmap, updatedRegion, false)
             var isGptRunning = true
-            ocrComponent.recognizeTextFromImage(croppedBitmap, { recognizedText ->
+
+            //OCR Process
+            ocrManager.ocrProcess(croppedBitmap, { recognizedText ->
                 //코루틴으로 . -> .. -> ... 으로 ui업데이트 되도록
                 CoroutineScope(Dispatchers.Main).launch {
                     val states = listOf(".", "..", "...")
@@ -59,6 +63,8 @@ class ForegroundCaptureService : Service() {
                         i++
                     }
                 }
+
+                //AI Process
                 aiManager.requestGptResponse(recognizedText){resultText->
                     Thread.sleep(10)
                     isGptRunning=false
@@ -81,7 +87,7 @@ class ForegroundCaptureService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        ocrComponent= OCRComponentImpl()
+        ocrManager= OCRManagerImpl()
         aiManager=GptManagerImpl()
         bitmapComponent= BitmapComponentImpl(this.contentResolver)
         setUpViewController()

@@ -1,13 +1,12 @@
-package com.example.tangler.service.ocr
+package com.example.tangler.service.ocr.component
 
 import android.graphics.Bitmap
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
 
-class OCRComponentImpl: OCRComponent {
-
-    private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+class OCRJPNComponentImpl: OCRComponent {
+    private val recognizer = TextRecognition.getClient(JapaneseTextRecognizerOptions.Builder().build())
 
     // OCR 처리 후 문자열을 반환하는 함수
     override fun recognizeTextFromImage(bitmap: Bitmap, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
