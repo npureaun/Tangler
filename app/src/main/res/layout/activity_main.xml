@@ -7,24 +7,29 @@
              android:clickable="false"
              android:focusable="false">
     <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <Spinner
+            android:id="@+id/spinnerOcrType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btnRestart"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:text="재시작" />
 
         <Button
-                android:id="@+id/btnRestart"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="재시작" />
+            android:id="@+id/btnExit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="종료" />
 
-        <Button
-                android:id="@+id/btnExit"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="종료" />
-
-    </LinearLayout>>
+    </LinearLayout>
 
 
 </FrameLayout>

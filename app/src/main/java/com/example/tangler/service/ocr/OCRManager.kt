@@ -11,7 +11,7 @@ class OCRManager {
     )
 
     fun ocrProcess(bitmap: Bitmap): String {
-        val key = uiStateProvider.getCurrentOCRType()
+        val key = UiStateProvider.getCurrentOCRType()
         val component = ocrMap[key]
             ?: error("Unsupported OCR type: $key")
 
