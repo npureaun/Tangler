@@ -12,6 +12,7 @@ import com.example.tangler.service.ocr.UiStateProvider
 
 class MainUiController(
     private val activity: Activity,
+    private val onCopyPromptClick: () -> Unit,
     private val onRestartClick: () -> Unit,
     private val onExitClick: () -> Unit
 ) {
@@ -19,6 +20,8 @@ class MainUiController(
     fun bind() {
         val ocrTypeSpinner =
             activity.findViewById<Spinner>(R.id.spinnerOcrType)
+        val copyPromptButton =
+            activity.findViewById<Button>(R.id.btnCopyPrompt)
         val restartButton =
             activity.findViewById<Button>(R.id.btnRestart)
         val exitButton =
@@ -38,6 +41,10 @@ class MainUiController(
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) = Unit
+        }
+
+        copyPromptButton.setOnClickListener {
+            onCopyPromptClick()
         }
 
         restartButton.setOnClickListener {

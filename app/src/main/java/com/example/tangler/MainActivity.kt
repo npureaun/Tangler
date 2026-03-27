@@ -1,6 +1,8 @@
 package com.example.tangler
 
 import android.content.Intent
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -8,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.example.tangler.activity.CapturePermission
 import com.example.tangler.activity.MainUiController
+import com.example.tangler.service.aiapi.gpt.GptConfig
 import com.example.tangler.service.foreground.ForegroundCaptureService
 
 class MainActivity : AppCompatActivity() {
@@ -39,6 +42,9 @@ class MainActivity : AppCompatActivity() {
 
         uiController = MainUiController(
             activity = this,
+            onCopyPromptClick = {
+                copyCurrentPrompt()
+            },
             onRestartClick = {
                 restartCaptureService()
             },
@@ -63,6 +69,13 @@ class MainActivity : AppCompatActivity() {
     fun shutdownApp(){
         stopService(serviceIntent)
         finishAndRemoveTask()
+    }
+
+    private fun copyCurrentPrompt() {
+        val clipboard = getSystemService(ClipboardManager::class.java)
+        val clip = ClipData.newPlainText("current_prompt", GptConfig.Prompt.v3())
+        clipboard.setPrimaryClip(clip)
+        Toast.makeText(this, "현재 프롬프트를 복사했습니다.", Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroy() {
