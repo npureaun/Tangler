@@ -1,8 +1,10 @@
 package com.example.tangler.service.aiapi.gpt.dto
 
+import com.example.tangler.service.aiapi.gpt.GptConfig
+
 
 data class GptRequest(
-    val model: String = "gpt-5.2-chat-latest",  //
+    val model: String = GptConfig.getModel(),  //
     val messages: List<Message>
 )
 

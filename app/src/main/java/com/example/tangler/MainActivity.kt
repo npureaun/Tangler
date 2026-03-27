@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
                     putExtra("data", result.data)
                 }
                 ContextCompat.startForegroundService(this, serviceIntent)
-                moveTaskToBack(true)
+                //moveTaskToBack(true)
             } else {
                 Toast.makeText(this, "화면 캡처 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
             }

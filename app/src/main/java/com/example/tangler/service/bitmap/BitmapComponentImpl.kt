@@ -45,7 +45,7 @@ class BitmapComponentImpl(
         }
     }
 
-    override fun cropBitmap(bitmap: Bitmap, captureRegion: Rect, saveOption: Boolean): Bitmap {
+    override fun cropBitmap(saveOption: Boolean, bitmap: Bitmap, captureRegion: Rect): Bitmap {
         val cropLeft = captureRegion.left.coerceAtLeast(0)
         val cropTop = captureRegion.top.coerceAtLeast(0)
         val cropWidth = captureRegion.width().coerceAtMost(bitmap.width - cropLeft)

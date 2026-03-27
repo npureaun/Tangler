@@ -1,6 +1,7 @@
 package com.example.tangler.service.ocr
 
 import android.graphics.Bitmap
+import com.example.tangler.service.ocr.component.OCRCHIComponentImpl
 import com.example.tangler.service.ocr.component.OCRComponent
 import com.example.tangler.service.ocr.component.OCRENGComponentImpl
 import com.example.tangler.service.ocr.component.OCRJPNComponentImpl
@@ -9,7 +10,8 @@ class OCRManagerImpl: OCRManager {
 
     private val ocrMap: Map<OCRType, OCRComponent> = mapOf(
         OCRType.ENG to OCRENGComponentImpl(),
-        OCRType.JPN to OCRJPNComponentImpl()
+        OCRType.JPN to OCRJPNComponentImpl(),
+        OCRType.CHI to OCRCHIComponentImpl(),
     )
 
     override fun ocrProcess(

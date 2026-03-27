@@ -7,7 +7,8 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
 class OCRENGComponentImpl: OCRComponent {
 
-    private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    private val recognizer = TextRecognition
+        .getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
     // OCR 처리 후 문자열을 반환하는 함수
     override fun recognizeTextFromImage(bitmap: Bitmap, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {

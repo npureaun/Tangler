@@ -18,8 +18,6 @@ import com.example.tangler.service.bitmap.BitmapComponent
 import com.example.tangler.service.bitmap.BitmapComponentImpl
 import com.example.tangler.service.ocr.OCRManager
 import com.example.tangler.service.ocr.OCRManagerImpl
-import com.example.tangler.service.ocr.component.OCRComponent
-import com.example.tangler.service.ocr.component.OCRENGComponentImpl
 import com.example.tangler.service.ui.ViewController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,10 +41,14 @@ class ForegroundCaptureService : Service() {
     private val captureRunnable = Runnable {
         val image = viewController.getImageLatestImage()
         image?.let {
+            ///CaptureProcess
             val fullBitmap = bitmapComponent.imageToBitmap(it)
 
             val updatedRegion = viewController.getOverlayPositionWithOffset()
-            val croppedBitmap = bitmapComponent.cropBitmap(fullBitmap, updatedRegion, true)
+            val croppedBitmap = bitmapComponent
+                .cropBitmap(
+                    false, fullBitmap, updatedRegion
+                )
             var isGptRunning = true
 
             //OCR Process
@@ -65,10 +67,10 @@ class ForegroundCaptureService : Service() {
                 }
 
                 //AI Process
-                aiManager.requestGptResponse(recognizedText){resultText->
+                aiManager.requestGptResponse(recognizedText) { resultText ->
                     Thread.sleep(10)
-                    isGptRunning=false
-                    if(resultText==null) viewController.updateText("ERROR")
+                    isGptRunning = false
+                    if (resultText == null) viewController.updateText("ERROR")
                     else viewController.updateText(resultText)
                 }
                 Log.d("OCR", "인식된 텍스트: $recognizedText")

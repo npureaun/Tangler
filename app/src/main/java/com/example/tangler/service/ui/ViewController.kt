@@ -45,7 +45,7 @@ class ViewController(
             gravity = Gravity.TOP or Gravity.START
             x = 200
             y = 200
-            alpha = 0.9f
+            alpha = 1f
         }
 
         // 오버레이 뷰 추가

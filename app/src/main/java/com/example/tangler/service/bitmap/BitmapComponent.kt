@@ -5,6 +5,6 @@ import android.graphics.Rect
 import android.media.Image
 
 interface BitmapComponent {
-    fun cropBitmap(bitmap: Bitmap, captureRegion: Rect, saveOption: Boolean=false): Bitmap
+    fun cropBitmap(saveOption: Boolean, bitmap: Bitmap, captureRegion: Rect): Bitmap
     fun imageToBitmap(image: Image): Bitmap
 }
